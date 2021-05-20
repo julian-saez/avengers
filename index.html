@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/932757f585.js" crossorigin="anonymous"></script>
+    <link href="/your-path-to-fontawesome/css/fontawesome.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/style.css">
+    <title>Reúnelos</title>
+</head>
+<body>
+    <header class="wrapper flex-container">
+        <h1>Salvemos el frontend</h1>
+        <nav>
+            <ol>
+                <li>
+                    <a href="pages/favorites.html">Favoritos</a>
+                </li>
+            </ol>
+        </nav>
+    </header>
+    <main>
+        <section id="goal-container" class="flex-container">
+            <div class="wrapper flex-container">               
+                <div>
+                    <h3>Actividad:</h3>
+                    <p>Salvemos el frontend reuniendo a los vengadores. ¡Buscalos y agregalos a favoritos!</p>
+                </div>
+                <div>
+                    <img class="marvel-icon" src="/assets/marvel-icon.png" alt="">
+                </div>
+            </div>
+            <img id="iron-man-bg" src="/assets/iron-man.png" alt="">
+ 
+        </section>
+        <section class="wrapper" id="search-section">
+            <div>
+                <h3>Busca el nombre del vengador</h3>
+                <form id="formulario">
+                    <input type="text" placeholder="Escribe aquí...">
+                    <button id="btnSearch">Buscar</button>
+                    <button id="btnShowAll">Mostrar todos</button>
+                </form>
+            </div>
+        </section>
+        <section id="cards-container">
+            <div class="wrapper">
+                <h3 id="title-cards-section"></h3>
+                <div id="results-container"></div>
+                <div id="bar-pagination" class="hidden-element">
+                    <button id="btnBack" class="btn-pagination"><span class="fas fa-arrow-left"></span></button>
+                    <div id="bar-pagination-items" class="flex-container"></div>
+                    <button id="btnNext" class="btn-pagination"><span class="fas fa-arrow-right"></span></button>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- <footer>
+        <div class="wrapper flex-container">
+            <img class="marvel-icon" src="/assets/marvel-icon.png" alt="Logo de Marvel"> 
+            <img id="avengers-text" src="/assets/avengers-text.png" alt="Logo de los vengadores">
+        </div>
+    </footer> -->
+    <script src="/scripts/search.js"></script>
+</body>
+</html>

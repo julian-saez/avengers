@@ -1,0 +1,10 @@
+@mixin buttonsStyles(){
+    border: 0;
+    padding: 10px 50px;
+    background-color: $primaryColor;
+    outline: none;
+    border-radius: 3px;
+    font-family: $secundaryFont;
+    font-weight: 600;
+    cursor: pointer;
+}
