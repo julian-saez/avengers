@@ -11,17 +11,21 @@ const cardsContainer = document.getElementById("cards-container")
 const barPaginationItems = document.getElementById("bar-pagination-items")
 const btnBack = document.getElementById("btnBack")
 const btnNext = document.getElementById("btnNext")
+const form = document.getElementById("formulario")
+
 
 let charactersResults = new Array()
-let favoritesCharactes = []
+let favoritesCharacters = new Array()
 let allCharacters = new Array()
+let favoritesCharactersId = new Array()
 let character = {
     name: '',
     description: '',
     comics: '',
     series: '',
     seriesCollection: '',
-    avatar: ''
+    avatar: '',
+    id: ''
 }
 let offset = 0;
 
@@ -29,12 +33,15 @@ const getFavorites = () => {
     let data = JSON.parse(localStorage.getItem("favoritesCharacters"))
     if(data != null){
         data.forEach(element => {
-            favoritesCharactes.push(element)
+            favoritesCharactersId.push(element.id)
+            favoritesCharacters.push(element)
         })
     }
 }
 
-// getFavorites()
+if(localStorage.key("favoritesCharacters")){
+    getFavorites()
+}
 
 const searchAllCharacters = () => {
     fetch(`${urlCharacters}&ts=1&apikey=${apikey}&hash=${apiKeyHash}&limit=6&offset=${offset}`)
@@ -50,7 +57,8 @@ const searchAllCharacters = () => {
                 description: element.description,
                 series: element.series.available,
                 seriesCollection: element.series.collectionURI,
-                avatar: `${element.thumbnail.path}.jpg`
+                avatar: `${element.thumbnail.path}.jpg`,
+                id: element.id
             }
             charactersResults.push(character2)
             });
@@ -58,7 +66,6 @@ const searchAllCharacters = () => {
         })
         .catch(err => console.log(err))
 }
-// searchAllCharacters()
 
 const searchCharacterId = name => {
     fetch(`${urlCharacters}&ts=1&apikey=${apikey}&hash=${apiKeyHash}&name=${name}`)
@@ -72,10 +79,10 @@ const searchCharacterId = name => {
                 description: res.data.results[0].description,
                 series: res.data.results[0].series.available,
                 seriesCollection: res.data.results[0].series.collectionURI,
-                avatar: `${res.data.results[0].thumbnail.path}.jpg`
+                avatar: `${res.data.results[0].thumbnail.path}.jpg`,
+                id: res.data.results[0].id
             }
             charactersResults.push(character2)
-            console.log("funcando por el momento")
             createCardsCharacters()
         })
         .catch(err => console.log(err))
@@ -84,7 +91,9 @@ const searchCharacterId = name => {
 let limitElementsToRender;
 let i = 0;
 
-const cardsRenderization = (name, source) => {
+
+
+const cardsRenderization = (name, source, id) => {
     let container = document.getElementById("container-cards-characters")
     let figure = document.createElement("figure")
     let figcaption = document.createElement("figcaption")
@@ -101,26 +110,36 @@ const cardsRenderization = (name, source) => {
     img.src = source
     img.alt = "Imagen del personaje"
     figure.classList = "flex-container"
-    btnAdd.innerHTML = "Añadir"
+    let btnAddState;
+    
+    if(favoritesCharactersId.includes(id)){
+        btnAdd.innerHTML = "Quitar"
+        btnAddState = false
+    }else{
+        btnAdd.innerHTML = "Añadir"
+        btnAddState = true
+    }
+
     columnInfo.classList = "flex-container"
     container.classList = "scale-in-hor-right"
+    
 
     btnAdd.addEventListener("click", e => {
         e.preventDefault()
-        let characterSelected = charactersResults.filter(element => element.name === name)
-        let character2 = {
-            name: characterSelected[0].name,
-            comics: characterSelected[0].comics,
-            description: characterSelected[0].description,
-            series: characterSelected[0].series.available,
-            seriesCollection: characterSelected[0].series.collectionURI,
-            avatar: `${characterSelected[0].avatar}`
+        if(btnAddState){
+            let characterSelected = charactersResults.filter(element => element.name === name)
+            favoritesCharacters.push(characterSelected[0])
+            saveFavoritesAtLocalStorage(favoritesCharacters)
+            btnAdd.innerHTML = "Quitar"
+            btnAddState = false
+        }else{
+            let index = favoritesCharactersId.indexOf(id)
+            favoritesCharacters.splice(index, 1)
+            saveFavoritesAtLocalStorage(favoritesCharacters)
+            btnAdd.innerHTML = "Añadir"
+            btnAddState = true
         }
 
-        console.log(character2.avatar)
-
-        favoritesCharactes.push(character2)
-        saveFavoritesAtLocalStorage(favoritesCharactes)
     })
 
     figcaption.addEventListener("click", ()  => {
@@ -160,12 +179,12 @@ const createCardsCharacters = async () => {
 
     if(charactersResults.length === 1){
         limitElementsToRender = 1
-        cardsRenderization(charactersResults[0].name, charactersResults[0].avatar)
+        cardsRenderization(charactersResults[0].name, charactersResults[0].avatar, charactersResults[0].id)
     }else if(charactersResults.length > 1){
         limitElementsToRender = 5
         i= 0;
         for(i; i <= limitElementsToRender; ++i){
-            cardsRenderization(charactersResults[i].name, charactersResults[i].avatar)
+            cardsRenderization(charactersResults[i].name, charactersResults[i].avatar, charactersResults[i].id)
         }
     }
 }
@@ -182,6 +201,7 @@ btnSearch.addEventListener("click", e => {
     e.preventDefault()
     deleteCardsCharacters()
     searchCharacterId(searchElement.value)
+    document.getElementById("formulario").reset()
 })
 
 /**
@@ -205,6 +225,7 @@ btnNext.addEventListener("click", e => {
 
 btnBack.addEventListener("click", e => {
     e.preventDefault()
+    // Lo que hace este offset es un horror vea por donde lo veas, y repite el request de unos elementos, lo sé. Pero recibirá una mejora hoy xd
     offset -= 5
     deleteCardsCharacters()
     searchAllCharacters()
