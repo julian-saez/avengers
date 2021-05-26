@@ -12,28 +12,27 @@ const barPaginationItems = document.getElementById("bar-pagination-items")
 const btnBack = document.getElementById("btnBack")
 const btnNext = document.getElementById("btnNext")
 const form = document.getElementById("formulario")
-
+let offset = 0;
+let countDataResults = 0
 
 let charactersResults = new Array()
 let favoritesCharacters = new Array()
 let allCharacters = new Array()
-let favoritesCharactersId = new Array()
 let character = {
     name: '',
     description: '',
     comics: '',
     series: '',
-    seriesCollection: '',
+    stories: '',
     avatar: '',
     id: ''
 }
-let offset = 0;
+
 
 const getFavorites = () => {
     let data = JSON.parse(localStorage.getItem("favoritesCharacters"))
     if(data != null){
         data.forEach(element => {
-            favoritesCharactersId.push(element.id)
             favoritesCharacters.push(element)
         })
     }
@@ -43,20 +42,24 @@ if(localStorage.key("favoritesCharacters")){
     getFavorites()
 }
 
+
 const searchAllCharacters = () => {
-    fetch(`${urlCharacters}&ts=1&apikey=${apikey}&hash=${apiKeyHash}&limit=6&offset=${offset}`)
+    fetch(`${urlCharacters}&ts=1&apikey=${apikey}&hash=${apiKeyHash}&limit=43&offset=${offset}`)
         .then(res => res.json())
         .then(res => {
-            charactersResults = []
+            if(charactersResults.length === 0){
+                charactersResults = []
+            }
             dataCount = res.data.limit
+            countDataResults = res.data.total
             let character2 = { ...character }
             res.data.results.forEach(element => {
                 character2 = {
                 name: element.name,
-                comics: element.comics,
+                comics: element.comics.available,
                 description: element.description,
                 series: element.series.available,
-                seriesCollection: element.series.collectionURI,
+                stories: element.stories.available,
                 avatar: `${element.thumbnail.path}.jpg`,
                 id: element.id
             }
@@ -67,30 +70,32 @@ const searchAllCharacters = () => {
         .catch(err => console.log(err))
 }
 
-const searchCharacterId = name => {
+const searchCharacterByName = name => {
     fetch(`${urlCharacters}&ts=1&apikey=${apikey}&hash=${apiKeyHash}&name=${name}`)
         .then(res => res.json())
         .then(res => {
             charactersResults = []
             let character2 = { ...character }
-            character2 = {
-                name: res.data.results[0].name,
-                comics: res.data.results[0].comics,
-                description: res.data.results[0].description,
-                series: res.data.results[0].series.available,
-                seriesCollection: res.data.results[0].series.collectionURI,
-                avatar: `${res.data.results[0].thumbnail.path}.jpg`,
-                id: res.data.results[0].id
+            if(res.data.results.length === 0){
+                deleteLoading()
+                titleCardsSection.innerHTML = "Sin resultados"
+            }else{
+                character2 = {
+                    name: res.data.results[0].name,
+                    comics: res.data.results[0].comics,
+                    description: res.data.results[0].description,
+                    series: res.data.results[0].series.available,
+                    seriesCollection: res.data.results[0].series.collectionURI,
+                    avatar: `${res.data.results[0].thumbnail.path}.jpg`,
+                    id: res.data.results[0].id
+                }
+                charactersResults.push(character2)
+                createCardsCharacters()
             }
-            charactersResults.push(character2)
-            createCardsCharacters()
+            
         })
         .catch(err => console.log(err))
 }
-
-let limitElementsToRender;
-let i = 0;
-
 
 
 const cardsRenderization = (name, source, id) => {
@@ -101,7 +106,9 @@ const cardsRenderization = (name, source, id) => {
     let btnAdd = document.createElement("button")
     let columnInfo = document.createElement("div")
 
-    container.appendChild(figure)
+    let pos = container.childElementCount - 1
+    let div = document.getElementById("container-cards-characters").children[pos]
+    div.appendChild(figure)
     figure.appendChild(img)
     figure.appendChild(columnInfo)
     columnInfo.appendChild(figcaption)
@@ -111,8 +118,7 @@ const cardsRenderization = (name, source, id) => {
     img.alt = "Imagen del personaje"
     figure.classList = "flex-container"
     let btnAddState;
-    
-    if(favoritesCharactersId.includes(id)){
+    if(favoritesCharacters.includes(indexed[id])){
         btnAdd.innerHTML = "Quitar"
         btnAddState = false
     }else{
@@ -122,7 +128,6 @@ const cardsRenderization = (name, source, id) => {
 
     columnInfo.classList = "flex-container"
     container.classList = "scale-in-hor-right"
-    
 
     btnAdd.addEventListener("click", e => {
         e.preventDefault()
@@ -133,7 +138,7 @@ const cardsRenderization = (name, source, id) => {
             btnAdd.innerHTML = "Quitar"
             btnAddState = false
         }else{
-            let index = favoritesCharactersId.indexOf(id)
+            let index = favoritesCharacters.indexOf(indexed[id])
             favoritesCharacters.splice(index, 1)
             saveFavoritesAtLocalStorage(favoritesCharacters)
             btnAdd.innerHTML = "Añadir"
@@ -149,43 +154,87 @@ const cardsRenderization = (name, source, id) => {
     })
 }
 
+
+
+const loadingAnimation = () => {
+    let box = document.createElement("div")
+    let div = document.createElement("div")
+    resultsContainer.appendChild(box)
+    box.appendChild(div)
+    box.classList = "bouncingLoader"
+    box.id = "loading-component"
+    resultsContainer.style.display = "flex"
+    resultsContainer.style.justifyContent = "center" 
+    resultsContainer.style.alignItems = "center" 
+    resultsContainer.classList = ""
+}
+
+
+const deleteLoading = () => {
+    let loadingComponent = document.getElementById("loading-component")
+    if(loadingComponent){
+        resultsContainer.removeChild(loadingComponent)
+    }
+}
+
+let indexed = favoritesCharacters.reduce((acc, el) => ({
+    ...acc, 
+    [el.id]: el
+}), {})
+
 const deleteCardsCharacters = () => {
     let containerCardsCharacters = document.getElementById("container-cards-characters")
+    let cardCharacterSelected = document.getElementById("card-character-searched")
+    if(cardCharacterSelected != null){
+        containerCardsCharacters.removeChild(cardCharacterSelected)
+    } 
     if(containerCardsCharacters != null){
         resultsContainer.removeChild(containerCardsCharacters)
     }
 }
 
-let pagination = 1;
-
-const createBarPagination = () => {
-    let div = document.createElement("div")
-    let span = document.createElement("span")
-    barPaginationItems.appendChild(div)
-    div.appendChild(span)
-    div.classList = "pagination-item"
-    span.innerHTML = pagination
-    pagination += 1
-}
-
+let pageSize = 0;
+let limitPages = 0;
+let i = 0;
+let y = 0;
 
 const createCardsCharacters = async () => {
-    titleCardsSection.innerHTML = "Resultados"
+    let containerCards = document.getElementById("container-cards-characters")
+    let container = document.createElement("div")
+    if(containerCards === null){
+        resultsContainer.appendChild(container)
+        container.id = "container-cards-characters"
+    }
     cardsContainer.classList = "cards-container"
     barPaginationContainer.classList = "flex-container"
-    let container = document.createElement("div")
-    container.id = "container-cards-characters"
-    resultsContainer.appendChild(container)
 
     if(charactersResults.length === 1){
-        limitElementsToRender = 1
+        let article = document.createElement("article")
+        container.appendChild(article)
+        article.classList = "cards-items"
+        article.id = "card-character-searched"
+        titleCardsSection.innerHTML = "Resultados"
+        deleteLoading()
+        limitPages = 1
         cardsRenderization(charactersResults[0].name, charactersResults[0].avatar, charactersResults[0].id)
     }else if(charactersResults.length > 1){
-        limitElementsToRender = 5
-        i= 0;
-        for(i; i <= limitElementsToRender; ++i){
-            cardsRenderization(charactersResults[i].name, charactersResults[i].avatar, charactersResults[i].id)
+        pageSize += 6
+        titleCardsSection.innerHTML = "Todos los superheroes"
+        deleteLoading()
+        offset += 43
+        for(i; i <= pageSize; ++i){
+            let nodeParent = resultsContainer.children[0]
+            let article = document.createElement("article")
+            nodeParent.appendChild(article)
+            article.classList = "cards-items"
+            limitPages += 6
+            if(limitPages < offset){
+                for(y; y <= limitPages - 1; ++y){
+                    cardsRenderization(charactersResults[y].name, charactersResults[y].avatar, charactersResults[y].id)
+                }
+            }
         }
+        barPagination()
     }
 }
 
@@ -199,8 +248,9 @@ const saveSelectedCharacter = data => {
 
 btnSearch.addEventListener("click", e => {
     e.preventDefault()
+    loadingAnimation()
     deleteCardsCharacters()
-    searchCharacterId(searchElement.value)
+    searchCharacterByName(searchElement.value)
     document.getElementById("formulario").reset()
 })
 
@@ -210,26 +260,69 @@ btnSearch.addEventListener("click", e => {
 
 btnShowAll.addEventListener("click", async e => {
     e.preventDefault()
+    i= 0;
+    loadingAnimation()
     deleteCardsCharacters()
     searchAllCharacters()
-    createBarPagination()
 })
+let p = 0;
+const barPagination = () => {
+    let amountCards = offset / 6
+    $(document).ready(() => {
+        let barContainer = $('#bar-pagination-items')
+        let cards = $('#container-cards-characters article');
+        cards.hide();
+        
+        let card = cards.eq(0)
+        let next = barContainer.eq(0)
+    
+        card.show();
+    
+        let pagination = $('<div id="paginas"></div>')
+        for(p; p < amountCards - 1; ++p){
+            $(`<span class="pagina pagination-items">${p + 1}</span>`).appendTo(pagination);
+        }
+    
+        pagination.insertBefore(next)
+    
+        $('.pagina').hover(function(){
+            $(this).addClass('hover');
+        }, function() {
+            $(this).removeClass('hover');
+        })
 
-btnNext.addEventListener("click", e => {
-    e.preventDefault()
-    offset += 5
-    deleteCardsCharacters()
-    searchAllCharacters()
-    createBarPagination()
-})
+        let lastPos = 0;
+    
+        $('span').click(function(){
+            cards.hide()
+            let index = parseInt($(this).text() - 1)
+            next = cards.eq(index)
+            lastPos = index
+            cards.addClass('scale-in-center')
+            next.show()
+        })
 
-btnBack.addEventListener("click", e => {
-    e.preventDefault()
-    // Lo que hace este offset es un horror vea por donde lo veas, y repite el request de unos elementos, lo sé. Pero recibirá una mejora hoy xd
-    offset -= 5
-    deleteCardsCharacters()
-    searchAllCharacters()
-})
+        $('#btnNext').click(function(){
+            cards.hide()
+            let lastIndex = Math.round(amountCards) - 1
+            if(lastPos === lastIndex){
+                searchAllCharacters()
+            }
+            next = cards.eq(lastPos + 1)
+            cards.addClass('scale-in-center')
+            next.show()
+            lastPos += 1
+        })
+
+        $('#btnBack').click(function(){
+            cards.hide()
+            next = cards.eq(lastPos - 1)
+            cards.addClass('scale-in-center')
+            next.show()
+        })
+    })
+}
+
 
 
 

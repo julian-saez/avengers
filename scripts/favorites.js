@@ -1,6 +1,5 @@
 const favoritesContainer = document.getElementById("container-cards-characters")
 let favoritesCharacters = []
-let favoritesCharactersId = new Array()
 
 const createCardsFavorites = (name, source, id) => {
     let figure = document.createElement("figure")
@@ -24,8 +23,11 @@ const createCardsFavorites = (name, source, id) => {
 
     btnRemove.addEventListener("click", e => {
         e.preventDefault()
-        let index = favoritesCharactersId.indexOf(id)
-        favoritesCharacters.splice(index, 1)
+        let indexed = favoritesCharacters.reduce((acc, el) => ({
+            ...acc, 
+            [el.id]: el
+        }), {})
+        favoritesCharacters.splice(favoritesCharacters.indexOf(indexed[id]), 1)
         saveFavoritesAtLocalStorage(favoritesCharacters)
     })
 }
@@ -38,7 +40,6 @@ const getFavoritesCharacters = () => {
     let data = JSON.parse(localStorage.getItem("favoritesCharacters"))
     data.forEach(element => {
         favoritesCharacters.push(element)
-        favoritesCharactersId.push(element.id)
         createCardsFavorites(element.name, element.avatar, element.id)
     })
 }
